@@ -2,7 +2,7 @@ name: siop_2025_masters_tutorial
 channels:
   - anaconda
 dependencies:
-  - python=3.11
+  - python=3.10
   - pip
   - pip:
     - -r requirements.txt
