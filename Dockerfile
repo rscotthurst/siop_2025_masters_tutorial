@@ -10,8 +10,8 @@ COPY app.py .
 
 RUN pip install -r requirements.txt
 
-EXPOSE 8081
+EXPOSE 80
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8081", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=80", "--server.address=0.0.0.0"]
 
-# docker build -t siop_2025 .; docker run -p 8081:8081 -d --env-file=.env siop_2025:latest
+# docker build -t siop_2025 .; docker run -p 80:80 -d --env-file=.env siop_2025:latest
