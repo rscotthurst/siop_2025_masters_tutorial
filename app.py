@@ -5,6 +5,5 @@ import streamlit as st
 
 dotenv.load_dotenv()
 
-st.title('Chat Bot Demo')
-st.subheader("Powered by Amazon Bedrock with Titan Text G1 - Express",
-             divider="rainbow")
+st.title('Hello World!')
+st.subheader("Powered by Docker", divider="rainbow")
