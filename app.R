@@ -64,8 +64,5 @@ server <- function(input, output) {
 # If you want to automatically reload the app when your codebase changes - should be turned off in production
 options(shiny.autoreload = TRUE)
 
-options(shiny.host = '0.0.0.0')
-options(shiny.port = 8080)
-
 # Create Shiny app ---- 
 shinyApp(ui = ui, server = server)

@@ -18,11 +18,11 @@ WORKDIR /app
 COPY app.R .
 
 # Expose our port
-EXPOSE 8080
+EXPOSE 80
 
 # Run shiny!
-ENTRYPOINT ["R", "-e", "shiny::runApp('app.R', port=8080)"]
+ENTRYPOINT ["R", "-e", "shiny::runApp('app.R', port=80, host='0.0.0.0')"]
 
-# docker build -t siop_2025 . && docker run -p 8080:8080 -d --env-file=.env siop_2025:latest
+# docker build -t siop_2025 . && docker run -p 80:80 -d --env-file=.env siop_2025:latest
 
 # docker build -t siop_2025 . && docker run -ti --rm siop_2025
