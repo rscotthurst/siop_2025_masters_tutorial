@@ -1,17 +1,28 @@
-FROM python:3.10-bullseye
+# Pull base image
+FROM r-base
 
+# Install Crucial system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install `pak` using basic installer
+RUN R -q -e 'install.packages("pak")'
+
+# Use `pak` to install shiny
+RUN R -q -e 'pak::pak("shiny")'
+
+# Set working directory and copy over app
 WORKDIR /app
+COPY app.R .
 
-RUN apt-get update
-RUN pip install --upgrade pip
+# Expose our port
+EXPOSE 8080
 
-COPY requirements.txt .
-COPY app.py .
+# Run shiny!
+ENTRYPOINT ["R", "-e", "shiny::runApp('app.R', port=8080)"]
 
-RUN pip install -r requirements.txt
+# docker build -t siop_2025 . && docker run -p 8080:8080 -d --env-file=.env siop_2025:latest
 
-EXPOSE 80
-
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=80", "--server.address=0.0.0.0"]
-
-# docker build -t siop_2025 .; docker run -p 80:80 -d --env-file=.env siop_2025:latest
+# docker build -t siop_2025 . && docker run -ti --rm siop_2025
