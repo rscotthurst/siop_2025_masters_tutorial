@@ -1,68 +1,76 @@
-#!/usr/bin/env Rscript
-
-# This example comes from the r-shiny examples github repo.
-# https://github.com/rstudio/shiny-examples/blob/master/001-hello/app.R
-
 library(shiny)
+library(dplyr)
+library(ggplot2)
+library(gapminder)
 
-# Define UI for app that draws a histogram ----
+# Specify the application port
+options(shiny.host = "0.0.0.0")
+options(shiny.port = 80)
+
+
 ui <- fluidPage(
-  
   # App title ----
   titlePanel("Hello Shiny!"),
-  
-  # Sidebar layout with input and output definitions ----
+
+  # Layout ----
   sidebarLayout(
-    
-    # Sidebar panel for inputs ----
     sidebarPanel(
-      
-      # Input: Slider for the number of bins ----
-      sliderInput(inputId = "bins",
-                  label = "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30)
-      
+      tags$h4("Gapminder Dashboard"),
+      tags$hr(),
+      selectInput(inputId = "inContinent", label = "Continent", choices = unique(gapminder$continent), selected = "Europe")
     ),
-    
-    # Main panel for displaying outputs ----
     mainPanel(
-      
-      # Output: Histogram ----
-      plotOutput(outputId = "distPlot")
-      
+      plotOutput(outputId = "outChartLifeExp"),
+      plotOutput(outputId = "outChartGDP")
     )
   )
 )
 
-
-# Define server logic required to draw a histogram ----
-server <- function(input, output) {
-  
-  # Histogram of the Old Faithful Geyser Data ----
-  # with requested number of bins
-  # This expression that generates a histogram is wrapped in a call
-  # to renderPlot to indicate that:
-  #
-  # 1. It is "reactive" and therefore should be automatically
-  #    re-executed when inputs (input$bins) change
-  # 2. Its output type is a plot
-  output$distPlot <- renderPlot({
-    
-    x    <- faithful$waiting
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    
-    hist(x, breaks = bins, col = "#75AADB", border = "white",
-         xlab = "Waiting time to next eruption (in mins)",
-         main = "Histogram of waiting times")
-    
+server <- function(input, output, session) {
+  # Filter data and store as reactive value
+  data <- reactive({
+    gapminder %>%
+      filter(continent == input$inContinent) %>%
+      group_by(year) %>%
+      summarise(
+        AvgLifeExp = round(mean(lifeExp)),
+        AvgGdpPercap = round(mean(gdpPercap), digits = 2)
+      )
   })
-  
+
+  # Common properties for charts
+  chart_theme <- ggplot2::theme(
+    plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12)
+  )
+
+  # Render Life Exp chart
+  output$outChartLifeExp <- renderPlot({
+    ggplot(data(), aes(x = year, y = AvgLifeExp)) +
+      geom_col(fill = "#0099f9") +
+      geom_text(aes(label = AvgLifeExp), vjust = 2, size = 6, color = "#ffffff") +
+      labs(title = paste("Average life expectancy in", input$inContinent)) +
+      theme_classic() +
+      chart_theme
+  })
+
+  # Render GDP chart
+  output$outChartGDP <- renderPlot({
+    ggplot(data(), aes(x = year, y = AvgGdpPercap)) +
+      geom_line(color = "#f96000", size = 2) +
+      geom_point(color = "#f96000", size = 5) +
+      geom_label(
+        aes(label = AvgGdpPercap),
+        nudge_x = 0.25,
+        nudge_y = 0.25
+      ) +
+      labs(title = paste("Average GDP per capita in", input$inContinent)) +
+      theme_classic() +
+      chart_theme
+  })
 }
 
-# If you want to automatically reload the app when your codebase changes - should be turned off in production
-options(shiny.autoreload = TRUE)
-
-# Create Shiny app ---- 
 shinyApp(ui = ui, server = server)
