@@ -2,7 +2,7 @@
 FROM rocker/shiny
 
 # Install R dependencies
-RUN R -e "install.packages(c('dplyr', 'ggplot2', 'gapminder'))"
+RUN R -e "install.packages(c('dplyr', 'ggplot2', 'paws', 'dotenv', 'curl'))"
 
 # Copy the Shiny app code
 COPY app.R app.R
@@ -13,4 +13,4 @@ EXPOSE 80
 # Run the R Shiny app
 CMD Rscript app.R
 
-# docker build -t siop_2025 . && docker run -p 8180:80 -d siop_2025:latest
+# docker build --platform linux/x86_64 -t siop_2025 . && docker run --env-file .env -p 8180:80 -d siop_2025:latest
