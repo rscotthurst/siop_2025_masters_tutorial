@@ -1,15 +1,8 @@
 library(shiny)
+library(shinycssloaders)
 library(paws)
 library(jsonlite)
 library(dotenv)
-
-# Try to load .env if it exists (local dev), otherwise use environment vars (Docker)
-if (file.exists(".env")) {
-  load_dot_env()
-} else {
-  # Docker will already have env vars set
-  message("No .env file found, using environment variables")
-}
 
 # Specify the application port
 options(shiny.host = "0.0.0.0")
@@ -37,6 +30,14 @@ reviews_df[c("title", "pros", "cons")] <- lapply(
 )
 
 reviews_json <- toJSON(reviews_df, pretty = TRUE)
+
+# Try to load .env if it exists (local dev), otherwise use environment vars (Docker)
+if (file.exists(".env")) {
+  load_dot_env()
+} else {
+  # Docker will already have env vars set
+  message("No .env file found, using environment variables")
+}
 
 # Connect to Amazon Bedrock
 bedrock_client <- paws::bedrockruntime(
@@ -81,12 +82,52 @@ call_llm <- function(prompt) {
 
 # Define UI for the app
 ui <- fluidPage(
+  # Set style
+  tags$head(
+    # Enable word wrap in llm output box
+    tags$style("
+      #llm_output {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        word-break: normal;
+        overflow-wrap: break-word;
+        max-width: 100%;
+        padding: 10px;
+      }
+    "
+    ),
+    # Make the "submit" button respond to Enter key
+    tags$script(
+      '$(document).ready(function() {
+        $("#user_input").keypress(function(e) {
+          if(e.which == 13) {
+            $("#submit").click();
+          }
+        });
+      });'
+    )
+  ),
   titlePanel("Basic Shiny App with Bedrock"),
+  # Add introductory text
+  fluidRow(
+    column(12,
+      HTML("
+        <p>
+          This is a basic Shiny app that uses Amazon Bedrock to generate responses to user input.
+          The app has been provided with 500 reviews submitted to Glassdoor about working for Honeywell and will use
+          those to answer questions (<a href='https://tinyurl.com/ms8fk7we' target='_blank'>data source</a>).
+
+          Enter your instructions in the text box below and click 'Submit' to get the LLM response.
+        </p>
+      ")
+    )
+  ),
+
 
   # Input section at top
   fluidRow(
     column(12,
-      textInput("user_input", "Enter your prompt:", ""),
+      textInput("user_input", "Enter Instructions:", "", width = '500px'),
       actionButton("submit", "Submit")
     )
   ),
@@ -95,22 +136,20 @@ ui <- fluidPage(
   fluidRow(
     column(12,
       h4("LLM Output:"),
-      verbatimTextOutput("llm_output")
+      withSpinner(verbatimTextOutput("llm_output"))
     )
   )
 )
 
 # Define server logic
-server <- function(input, output) {
-
-  observeEvent(input$submit, {
+server <- function(input, output, session) {
+  llm_response <- eventReactive(input$submit, {
     # Call the call_llm function with user input
-    output_text <- call_llm(input$user_input)
+    call_llm(input$user_input)
+  })
 
-    # Display the output
-    output$llm_output <- renderText({
-      output_text
-    })
+  output$llm_output <- renderText({
+    llm_response()
   })
 }
 

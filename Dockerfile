@@ -2,7 +2,7 @@
 FROM rocker/shiny
 
 # Install R dependencies
-RUN R -e "install.packages(c('dplyr', 'ggplot2', 'paws', 'dotenv', 'curl'))"
+RUN R -e "install.packages(c('dplyr', 'ggplot2', 'paws', 'dotenv', 'curl', 'shinycssloaders'))"
 
 # Copy the Shiny app code
 COPY app.R app.R
