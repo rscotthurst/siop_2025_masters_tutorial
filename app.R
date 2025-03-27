@@ -8,24 +8,12 @@ library(dotenv)
 options(shiny.host = "0.0.0.0")
 options(shiny.port = 80)
 
-# Download Data from Kaggle if needed
-if (file.exists("honeywell_reviews") == FALSE) {
-  system2("curl", args = c(
-    "-L", "-o", 'honeywell_reviews.zip',
-    "https://www.kaggle.com/api/v1/datasets/download/dhirajnimbalkar/topicmodellinghoneywellglassdoorreviews"
-  ))
-
-  # Unzip and remove the .zip file
-  unzip('honeywell_reviews.zip', exdir = "honeywell_reviews")
-  file.remove('honeywell_reviews.zip')
-}
-
-# Load 500 rows of data, remove first column
-reviews_df <- head(read.csv("honeywell_reviews/glassdoortest1.csv"), 500)[-1]
+# Load data
+reviews_df  <- read.csv('sample-data.csv')
 
 # Clean the text to prepare for LLM in JSON format
-reviews_df[c("title", "pros", "cons")] <- lapply(
-  reviews_df[c("title", "pros", "cons")],
+reviews_df[c("JobTitle", "Pros", "Cons")] <- lapply(
+  reviews_df[c("JobTitle", "Pros", "Cons")],
   function(x) iconv(x, "ASCII", "UTF-8", sub = "")
 )
 
@@ -33,6 +21,7 @@ reviews_json <- toJSON(reviews_df, pretty = TRUE)
 
 # Try to load .env if it exists (local dev), otherwise use environment vars (Docker)
 if (file.exists(".env")) {
+  message("Loading environment variables from .env")
   load_dot_env()
 } else {
   # Docker will already have env vars set
@@ -48,7 +37,7 @@ bedrock_client <- paws::bedrockruntime(
 
 # Define the call_llm function
 call_llm <- function(prompt) {
-  # Add relevant deatils to the prompt
+  # Add relevant details to the prompt
   prompt <- paste0(
     "You are a helpful assistant that analyzes reviews from the Glassdoor website. ",
     "Use the reviews included here in JSON format to answer the users questions: \n\n",
@@ -57,27 +46,34 @@ call_llm <- function(prompt) {
     prompt
   )
 
-
   request_body <- list(
-    anthropic_version = "bedrock-2023-05-31",
-    max_tokens = 1000,
+    inferenceConfig = list(
+      max_new_tokens = 1000
+    ),
     messages = list(
       list(
         role = "user",
-        content = prompt
+        content = list(
+          list(
+            text = prompt
+          )
+        )
       )
-    ),
-    temperature = 0.7
+    )
   )
 
   response <- bedrock_client$invoke_model(
     body = toJSON(request_body, auto_unbox = TRUE),
-    modelId = "anthropic.claude-3-sonnet-20240229-v1:0",
+    modelId = "amazon.nova-micro-v1:0",
+    accept = "application/json",
+    contentType = "application/json"
   )
 
   # Return the text response
   response_text <- fromJSON(rawToChar(response$body))
-  return(response_text$content$text)
+  print(response_text$output$message$content[1]$text)
+
+  return(response_text$output$message$content[1]$text)
 }
 
 # Define UI for the app

@@ -16,6 +16,7 @@ RUN R -e "install.packages(c('dplyr', 'ggplot2', 'dotenv', 'curl', 'shinycssload
 
 # Copy the Shiny app code
 COPY app.R app.R
+COPY sample-data.csv sample-data.csv
 
 # Expose the application port
 EXPOSE 80
