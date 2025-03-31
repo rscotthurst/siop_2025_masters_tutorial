@@ -110,8 +110,8 @@ ui <- fluidPage(
       HTML("
         <p>
           This is a basic Shiny app that uses Amazon Bedrock to generate responses to user input.
-          The app has been provided with 500 reviews submitted to Glassdoor about working for Honeywell and will use
-          those to answer questions (<a href='https://tinyurl.com/ms8fk7we' target='_blank'>data source</a>).
+          The app has been provided with synthetic reviews about working for a fictional company and will use
+          those to answer questions.
 
           Enter your instructions in the text box below and click 'Submit' to get the LLM response.
         </p>
