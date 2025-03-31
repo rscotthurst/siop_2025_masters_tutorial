@@ -9,7 +9,7 @@ options(shiny.host = "0.0.0.0")
 options(shiny.port = 80)
 
 # Load data
-reviews_df  <- read.csv('sample-data.csv')
+reviews_df  <- read.csv('https://ws-assets-prod-iad-r-iad-ed304a55c2ca1aee.s3.us-east-1.amazonaws.com/6b6be506-b4f6-4f94-9883-d929e72c17eb/sample-data.csv')
 
 # Clean the text to prepare for LLM in JSON format
 reviews_df[c("JobTitle", "Pros", "Cons")] <- lapply(
